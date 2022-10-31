@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
-import { ApiPromise, WsProvider } from "@polkadot/api";
+import { useEffect, useState } from 'react';
+import { ApiPromise, WsProvider } from '@polkadot/api';
 import { ContractPromise } from '@polkadot/api-contract';
 
 import abi from '../metadata/metadata_sample.json';
-import axios from "axios";
+import axios from 'axios';
 
-import Header from "./Header";
-import Footer from "./Footer";
-import SampleContractsList from "./SampleContractsList";
+import Header from './Header';
+import Footer from './Footer';
+import SampleContractsList from './SampleContractsList';
 
 const IndexCanvas = () => {
   
@@ -33,35 +33,34 @@ const IndexCanvas = () => {
   ];
 
   const [block, setBlock] = useState(0);
-  const [lastBlockHash, setLastBlockHash] = useState("");
-  const [blockchainUrl, setBlockchainUrl] = useState("");
-  const [blockchainName, setBlockchainName] = useState("");
-  const [actingChainName, setActingChainName] = useState("");
-  const [actingChainUrl, setActingChainUrl] = useState("");
+  const [lastBlockHash, setLastBlockHash] = useState('');
+  const [blockchainUrl, setBlockchainUrl] = useState('');
+  const [blockchainName, setBlockchainName] = useState('');
+  const [actingChainName, setActingChainName] = useState('');
+  const [actingChainUrl, setActingChainUrl] = useState('');
 
   const [api, setApi] = useState<any>();
 
-  const [contractAddress, setContractAddress] = useState("");
-  const [tokenId, setTokenId] = useState("");
-  const [tokenURI, setTokenURI] = useState("");
-  const [ownerAddress, setOwnerAddress] = useState("");
+  const [contractAddress, setContractAddress] = useState('');
+  const [tokenId, setTokenId] = useState('');
+  const [tokenURI, setTokenURI] = useState('');
+  const [ownerAddress, setOwnerAddress] = useState('');
   
-  const [result, setResult] = useState("");
-  const [outcome, setOutcome] = useState("");
+  const [result, setResult] = useState('');
+  const [outcome, setOutcome] = useState('');
   
-  const [tokenJson, setTokenJson] = useState("");
-  const [tokenImageUri, setTokenImageUri] = useState("");
-  const [tokenName, setTokenName] = useState("");
-  const [tokenDescription, setTokenDescription] = useState("");
-  const [subScanUri, setSubScanUri] = useState("");
-  const [subScanTitle, setSubScanTitle] = useState("");
+  const [tokenImageURI, setTokenImageURI] = useState('');
+  const [tokenName, setTokenName] = useState('');
+  const [tokenDescription, setTokenDescription] = useState('');
+  const [subScanUri, setSubScanUri] = useState('');
+  const [subScanTitle, setSubScanTitle] = useState('');
 
   useEffect(() => {
   });
   
   async function getTokenURI() {
     if (!blockchainUrl || !block) {
-      alert("Please select Blockchain and click 'Set Blockchain' button.");
+      alert('Please select Blockchain and click "Set Blockchain" button.');
       return;
     }
     const contract = new ContractPromise(api, abi, contractAddress);
@@ -80,44 +79,46 @@ const IndexCanvas = () => {
     if (result.isOk) {
       // output the return value
       console.log('Success', output?.toHuman());
-      const outcome: any = output;
+      const outputData: any = output;
+      setOutcome(outputData.toString());
 
-      if (outcome.isOk) {
-        const url = outcome.inner.toString();
+      if (outputData.isOk) {
+        const url = outputData.inner.toString();
         if (url !== undefined) {
-          setOutcome(url);
+          setTokenURI(url);
           axios.get(url).then(res => {
-            setTokenJson(res.data.image.toString());
-            setTokenImageUri(res.data.image.toString());
+            // TokenURI metadata
+            console.log(res.data);
+            setTokenImageURI(res.data.image.toString());
             setTokenName(res.data.name.toString());
             setTokenDescription(res.data.description.toString());
           });
         }
         
-        if (actingChainName === "Shiden" || actingChainName === "Shibuya") {
+        if (actingChainName === 'Shiden' || actingChainName === 'Shibuya') {
           const newDataset = blockchains.filter(data => data.name === actingChainName);
           const subScanBaseUri = newDataset[0]?.subscan_url;
           setSubScanUri(subScanBaseUri + contractAddress);
           setSubScanTitle('Show on Subscan (' + actingChainName + ')');
         } else {
-          setSubScanTitle("");
+          setSubScanTitle('');
         }
     
         getOwnerOf();
 
       } else {
-        setOutcome(outcome.inner.toString());
-        setTokenJson('');
-        setTokenImageUri('');
-        setTokenName(outcome.inner.toString());
+        setOutcome(outputData.toString());
+        setTokenURI('');
+        setTokenImageURI('');
+        setTokenName('');
         setTokenDescription('');
-        setOwnerAddress('none (TokenNotExists)');
+        setOwnerAddress('');
       }
 
     } else {
       setOutcome('');
-      setTokenJson('');
-      setTokenImageUri('');
+      setTokenURI('');
+      setTokenImageURI('');
       setTokenName('');
       setTokenDescription('');
       setOwnerAddress('');
@@ -161,15 +162,14 @@ const IndexCanvas = () => {
     }
 
     const wsProvider = new WsProvider(chainUrl);
-    const api2 = await ApiPromise.create({provider: wsProvider});
-
-    const unsub = await api2.rpc.chain.subscribeNewHeads((lastHeader) => {
-      setApi(api2);
+    const api = await ApiPromise.create({provider: wsProvider});
+    await api.rpc.chain.subscribeNewHeads((lastHeader) => {
+      setApi(api);
       setActingChainName(blockchainName);
       setBlock(lastHeader.number.toNumber());
       setLastBlockHash(lastHeader.hash.toString());
       setActingChainUrl(chainUrl);
-      console.log(api2.hasSubscriptions);
+      //console.log(api.hasSubscriptions);
     });
   };
 
@@ -187,7 +187,6 @@ const IndexCanvas = () => {
         <select
           className="p-3 m-3 mt-0 bg-[#020913] border-2 border-gray-300 rounded"
           onChange={(event) => {
-            console.log(event.target.value);
             setBlockchainName((event.target.value));
           }}
         >
@@ -226,18 +225,19 @@ const IndexCanvas = () => {
 
         <div className="text-center">
           <div>
-            <img className="p-2 m-auto w-64" src={tokenImageUri} />
+            <img className="p-2 m-auto w-64" src={tokenImageURI} />
             <p className="p-1 m-1 text-xl break-words">{tokenName}</p>
             <p className="p-1 m-1 break-words">{tokenDescription}</p>
-            <p className={contractAddress ? "m-1 break-all" : "hidden"}><a target="_blank" rel="noreferrer" href={subScanUri}>{subScanTitle}</a></p>
+            <p className={contractAddress ? "m-1 break-all" : "hidden"}><a className="hover:text-gray-400" target="_blank" rel="noreferrer" href={subScanUri}>{subScanTitle}</a></p>
           </div>
         </div>
 
-        <div>
-        <p className="p-1 m-1 break-all">Result: {result}</p>
-          <p className="p-1 m-1 break-all">MetadataUri: {outcome}</p>
-          <p className="p-1 m-1 break-all" >ImageUri: {tokenJson}</p>
+        <div className="m-2 mt-4 p-2 bg-[#020913] rounded">
+          <p className="p-1 m-1 break-all">Result: {result}</p>
+          <p className="p-1 m-1 break-all">OutputData: {outcome}</p>
           <p className="p-1 m-1">TokenId: {tokenId}</p>
+          <p className="p-1 m-1 break-all">TokenURI: {tokenURI}</p>
+          <p className="p-1 m-1 break-all" >ImageURI: {tokenImageURI}</p>
           <p className="p-1 m-1 break-all">OwnerAddress: {ownerAddress}</p>
         </div>
       </div>
