@@ -6,8 +6,7 @@ const SampleContractsList = (): JSX.Element => {
       { name: 'PSP34 sample basic', address: 'none' },
     ],
     shibuya: [
-//      { name: 'CieloNFT(u32)', address: 'Wo8i6CdBGLQjMpjXocfNrfgNbfhzu1anzmYJW7dednMCpM4' },
-      { name: 'PSP34 sample basic', address: 'none' },
+      { name: 'PSP34 sample basic', address: 'YAYbD5kkvqAAK8JcUgmohXzY3NiFdPa6ReJQ582L8AUFrVi' },
     ],
     local: [
       { name: 'PSP34 sample basic', address: '5FRqw5qG2BXWeccfgojTj6wnGF9d94H1dRehMw7tT5rvXf2Q' },

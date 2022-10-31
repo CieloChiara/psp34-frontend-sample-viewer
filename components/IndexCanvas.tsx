@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react";
-import '@polkadot/api-augment'
-import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
-import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import { useEffect, useState } from 'react';
+import { ApiPromise, WsProvider } from '@polkadot/api';
 import { ContractPromise } from '@polkadot/api-contract';
 
 import abi from '../metadata/metadata_sample.json';
-import axios from "axios";
+import axios from 'axios';
 
-import Header from "./Header";
-import Footer from "./Footer";
-import SampleContractsList from "./SampleContractsList";
+import Header from './Header';
+import Footer from './Footer';
+import SampleContractsList from './SampleContractsList';
 
 const IndexCanvas = () => {
   
@@ -35,53 +33,34 @@ const IndexCanvas = () => {
   ];
 
   const [block, setBlock] = useState(0);
-  const [lastBlockHash, setLastBlockHash] = useState("");
-  const [blockchainUrl, setBlockchainUrl] = useState("");
-  const [blockchainName, setBlockchainName] = useState("");
-  const [actingChainName, setActingChainName] = useState("");
-  const [actingChainUrl, setActingChainUrl] = useState("");
+  const [lastBlockHash, setLastBlockHash] = useState('');
+  const [blockchainUrl, setBlockchainUrl] = useState('');
+  const [blockchainName, setBlockchainName] = useState('');
+  const [actingChainName, setActingChainName] = useState('');
+  const [actingChainUrl, setActingChainUrl] = useState('');
 
-  const [accounts, setAccounts] = useState<InjectedAccountWithMeta[]>([]);
-  const [actingAddress, setActingAddress] = useState("");
   const [api, setApi] = useState<any>();
 
-  const [contractAddress, setContractAddress] = useState("");
-  const [tokenId, setTokenId] = useState("");
-  const [tokenURI, setTokenURI] = useState("");
-  const [ownerAddress, setOwnerAddress] = useState("");
+  const [contractAddress, setContractAddress] = useState('');
+  const [tokenId, setTokenId] = useState('');
+  const [tokenURI, setTokenURI] = useState('');
+  const [ownerAddress, setOwnerAddress] = useState('');
   
-  const [result, setResult] = useState("");
-  const [gasConsumed, setGasConsumed] = useState("");
-  const [outcome, setOutcome] = useState("");
+  const [result, setResult] = useState('');
+  const [outcome, setOutcome] = useState('');
   
-  const [tokenJson, setTokenJson] = useState("");
-  const [tokenImageUri, setTokenImageUri] = useState("");
-  const [tokenName, setTokenName] = useState("");
-  const [tokenDescription, setTokenDescription] = useState("");
-  const [subScanUri, setSubScanUri] = useState("");
-  const [subScanTitle, setSubScanTitle] = useState("");
+  const [tokenImageURI, setTokenImageURI] = useState('');
+  const [tokenName, setTokenName] = useState('');
+  const [tokenDescription, setTokenDescription] = useState('');
+  const [subScanUri, setSubScanUri] = useState('');
+  const [subScanTitle, setSubScanTitle] = useState('');
 
-/*
-  const extensionSetup = async () => {
-    const { web3Accounts, web3Enable } = await import(
-      "@polkadot/extension-dapp"
-    );
-    const extensions = await web3Enable("Showcase PSP34 Mint Sample");
-    if (extensions.length === 0) {
-      return;
-    }
-    const account = await web3Accounts();
-    setAccounts(account);
-  };
-*/
-
-useEffect(() => {
-//    setup();
+  useEffect(() => {
   });
   
   async function getTokenURI() {
     if (!blockchainUrl || !block) {
-      alert("Please select Blockchain and click 'Set Blockchain' button.");
+      alert('Please select Blockchain and click "Set Blockchain" button.');
       return;
     }
     const contract = new ContractPromise(api, abi, contractAddress);
@@ -93,70 +72,82 @@ useEffect(() => {
     
     setResult(JSON.stringify(result.toHuman()));
 
-    if (result.type === 'Ok') {
+    // The actual result from RPC as `ContractExecResult`
+    console.log(result.toHuman());
 
-      const outcome: any = output;
+    // check if the call was successful
+    if (result.isOk) {
+      // output the return value
+      console.log('Success', output?.toHuman());
+      const outputData: any = output;
+      setOutcome(outputData.toString());
 
-      if (outcome.type === 'Ok') {
-        const url = outcome.inner.toString();
+      if (outputData.isOk) {
+        const url = outputData.inner.toString();
         if (url !== undefined) {
-          setOutcome(url);
+          setTokenURI(url);
           axios.get(url).then(res => {
-            setTokenJson(res.data.image.toString());
-            setTokenImageUri(res.data.image.toString());
+            // TokenURI metadata
+            console.log(res.data);
+            setTokenImageURI(res.data.image.toString());
             setTokenName(res.data.name.toString());
             setTokenDescription(res.data.description.toString());
           });
         }
         
-        if (actingChainName === "Shiden" || actingChainName === "Shibuya") {
+        if (actingChainName === 'Shiden' || actingChainName === 'Shibuya') {
           const newDataset = blockchains.filter(data => data.name === actingChainName);
           const subScanBaseUri = newDataset[0]?.subscan_url;
           setSubScanUri(subScanBaseUri + contractAddress);
           setSubScanTitle('Show on Subscan (' + actingChainName + ')');
         } else {
-          setSubScanTitle("");
+          setSubScanTitle('');
         }
     
         getOwnerOf();
 
-      } else if (outcome.type === 'Err') {
-        setOutcome(outcome.inner.toString());
-        setTokenJson('');
-        setTokenImageUri('');
-        setTokenName(outcome.inner.toString());
+      } else {
+        setOutcome(outputData.toString());
+        setTokenURI('');
+        setTokenImageURI('');
+        setTokenName('');
         setTokenDescription('');
-        setOwnerAddress('none (TokenNotExists)');
+        setOwnerAddress('');
       }
 
-    } else if (result.type === 'Err') {
+    } else {
       setOutcome('');
-      setTokenJson('');
-      setTokenImageUri('');
-      setTokenName(result.toString());
+      setTokenURI('');
+      setTokenImageURI('');
+      setTokenName('');
       setTokenDescription('');
       setOwnerAddress('');
     }
-
   };
 
   async function getOwnerOf() {
-    const gasLimit = 3000 * 1000000;
-
     const contract = new ContractPromise(api, abi, contractAddress);
-    const {gasConsumed, result, output} = 
+    const {result, output} = 
       await contract.query['psp34::ownerOf'](
         contractAddress,
         {value: 0, gasLimit: -1},
         {u64: tokenId});
     
-    const resultStr: string = output?.toHuman()?.toString()!; 
-    if (resultStr) {
-      setOwnerAddress(resultStr);
-    } else {
-      setOwnerAddress('none');
-    }
+    // The actual result from RPC as `ContractExecResult`
+    console.log(result.toHuman());
 
+    // check if the call was successful
+    if (result.isOk) {
+      // output the return value
+      console.log('Success', output?.toHuman());
+      const outcome: any = output;
+      const resultStr: string = outcome.toHuman()?.toString()!; 
+      if (resultStr) {
+        setOwnerAddress(resultStr);
+      } else {
+        setOwnerAddress('none');
+      }
+    }
   };
 
   const setup = async () => {
@@ -164,36 +155,22 @@ useEffect(() => {
     const newDataset = blockchains
       .filter(data => data.name === blockchainName);
     const chainUrl = newDataset[0]?.url;
-    //blockchainUrl = newDataset[0]?.url;
     setBlockchainUrl(newDataset[0]?.url);
-    //alert(blockchainUrl);
-    //console.log(newDataset);
-    //alert(newDataset[0]?.url);
 
     if (!chainUrl) {
       return;
     }
-    const wsProvider = new WsProvider(chainUrl);
-    const api2 = await ApiPromise.create({provider: wsProvider});
 
-    const unsub = await api2.rpc.chain.subscribeNewHeads((lastHeader) => {
-      setApi(api2);
+    const wsProvider = new WsProvider(chainUrl);
+    const api = await ApiPromise.create({provider: wsProvider});
+    await api.rpc.chain.subscribeNewHeads((lastHeader) => {
+      setApi(api);
       setActingChainName(blockchainName);
       setBlock(lastHeader.number.toNumber());
       setLastBlockHash(lastHeader.hash.toString());
       setActingChainUrl(chainUrl);
-      console.log(api2.hasSubscriptions);
+      //console.log(api.hasSubscriptions);
     });
-/*
-    setTimeout(() => {
-      console.log(api2.type); //.options.provider);
-            if (api !== api2) {
-
-        //unsub();
-        alert('Unsubscribed');
-      }
-      }, 3000);
-*/
   };
 
   return (
@@ -210,7 +187,6 @@ useEffect(() => {
         <select
           className="p-3 m-3 mt-0 bg-[#020913] border-2 border-gray-300 rounded"
           onChange={(event) => {
-            console.log(event.target.value);
             setBlockchainName((event.target.value));
           }}
         >
@@ -225,22 +201,6 @@ useEffect(() => {
         <div className="p-2 m-2 mt-0">Current Blockchain URL: {actingChainUrl? actingChainUrl : "---"}</div>
         <div className="p-1 m-1">Block: {block? block : "---"}</div>
         <div className="p-1 m-auto w-11/12 break-all">Last block hash: {lastBlockHash? lastBlockHash : "---"}</div>
-      </div>
-
-      <div className="text-center mt-5">
-        <select
-          className="p-3 m-3 bg-[#020913] border-2 border-gray-300 rounded hidden"
-          onChange={(event) => {
-            console.log(event);
-            setActingAddress(event.target.value);
-          }}
-        >
-          {accounts.map((a) => (
-            <option key={a.address} value={a.address}>
-              [{a.meta.name}]
-            </option>
-          ))}
-        </select>
       </div>
 
       <div className="text-left p-2 pt-0 mt-5 m-auto max-w-6xl w-11/12 border-[#323943] bg-[#121923] border border-1 rounded">
@@ -265,17 +225,19 @@ useEffect(() => {
 
         <div className="text-center">
           <div>
-            <img className="p-2 m-auto w-64" src={tokenImageUri} />
+            <img className="p-2 m-auto w-64" src={tokenImageURI} />
             <p className="p-1 m-1 text-xl break-words">{tokenName}</p>
             <p className="p-1 m-1 break-words">{tokenDescription}</p>
-            <p className={contractAddress ? "m-1 break-all" : "hidden"}><a target="_blank" rel="noreferrer" href={subScanUri}>{subScanTitle}</a></p>
+            <p className={contractAddress ? "m-1 break-all" : "hidden"}><a className="hover:text-gray-400" target="_blank" rel="noreferrer" href={subScanUri}>{subScanTitle}</a></p>
           </div>
         </div>
 
-        <div>
-          <p className="p-1 m-1 break-all">MetadataUri: {outcome}</p>
-          <p className="p-1 m-1 break-all" >ImageUri: {tokenJson}</p>
+        <div className="m-2 mt-4 p-2 bg-[#020913] rounded">
+          <p className="p-1 m-1 break-all">Result: {result}</p>
+          <p className="p-1 m-1 break-all">OutputData: {outcome}</p>
           <p className="p-1 m-1">TokenId: {tokenId}</p>
+          <p className="p-1 m-1 break-all">TokenURI: {tokenURI}</p>
+          <p className="p-1 m-1 break-all" >ImageURI: {tokenImageURI}</p>
           <p className="p-1 m-1 break-all">OwnerAddress: {ownerAddress}</p>
         </div>
       </div>
