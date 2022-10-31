@@ -1,10 +1,9 @@
-import Navigation from "./Navigation";
 
 const Footer = (): JSX.Element => {
   
   return (
     <div className="m-2">
-      <Navigation />
+      PSP34 frontend viewer sample
     </div>
   );
 };
