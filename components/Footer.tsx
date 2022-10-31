@@ -3,7 +3,7 @@ const Footer = (): JSX.Element => {
   
   return (
     <div className="m-5">
-      PSP34 frontend viewer sample
+      PSP34 Viewer Sample
     </div>
   );
 };
